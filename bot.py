@@ -31,7 +31,7 @@ def get_games():
     j = json.loads(r)
     games = []
     for item in j['data']['list']:
-        if item['price_new'] == 0:
+        if item['price_new'] == 0 and not(item['shop']['name'].lower()) in __j__['storefilter'].lower():
             game = Game(item['title'], item['shop']['name'], item['urls']['buy'], added=item['added'])
             games.append(game)
     return games
