@@ -2,5 +2,5 @@
   "apikey": "Your IsThereAnyDeal API Key",
   "webhook": "Your Discord WebHook Link",
   "storefilter": "Itch.io",
-  "_comment": "By default it filters itch.io free games, because they post so much of them, most are small indie and rather unimportant, and the big popular games generally get lost with all the Itch.io games"
+  "tag@everyone": false
 }

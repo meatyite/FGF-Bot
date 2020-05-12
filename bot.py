@@ -18,6 +18,8 @@ class Game:
         self.added = added
         self.announce_msg = "`{}` Is now on {} For Free!\nGet it now: {}".format(self.title, self.shop_name,
                                                                                  self.buy_url)
+        if __j__['tag@everyone']:
+            self.announce_msg = "@everyone " + self.announce_msg
 
 
 def get_games():
