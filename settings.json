@@ -1,6 +1,11 @@
 {
-  "apikey": "Your IsThereAnyDeal API Key",
-  "webhook": "Your Discord WebHook Link",
-  "storefilter": "Itch.io",
-  "tag@everyone": false
+  "api_key": "Your IsThereAnyDeal API Key",
+  "web_hook": "Your Discord WebHook Link",
+  "show_only": false,
+  "show_only_list": "steam,gog",
+  "dont_show_only": true,
+  "dont_show_only_list": "Itch.io",
+  "tag@everyone": false,
+  "country": "default",
+  "min_price": 0.00
 }

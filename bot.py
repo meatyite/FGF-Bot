@@ -5,37 +5,57 @@ import os
 
 __j__ = json.loads(open("settings.json", 'r').read())
 
-apiKey = __j__['apikey'] # https://isthereanydeal.com API key
-webhook = DiscordWebhooks(__j__['webhook'])
+api_key = __j__['api_key']
+web_hook = DiscordWebhooks(__j__['web_hook'])
 
 
 class Game:
 
-    def __init__(self, title, shop_name, buy_url, added):
+    def __init__(self, title, shop_name, buy_url, price, currecny, added):
         self.title = title
         self.shop_name = shop_name
         self.buy_url = buy_url
+        self.price = price
+        self.currency = currecny
         self.added = added
-        self.announce_msg = "`{}` Is now on {} For Free!\nGet it now: {}".format(self.title, self.shop_name,
+        price_str = str(price) + " " + currecny
+        if price == 0.00:
+            price_str = "Free"
+        self.announce_msg = "`{}` Is now on {} For {}!\nGet it now: {}".format(self.title, self.shop_name, price_str,
                                                                                  self.buy_url)
         if __j__['tag@everyone']:
             self.announce_msg = "@everyone " + self.announce_msg
 
 
+class BothFilterTypesError(Exception):
+    pass
+
+
 def get_games():
+    params = {
+        'key': api_key,
+    }
+    if __j__['min_price'] <= 4.99:
+        params['sort'] = 'price:asc'
+    if __j__['country'] != 'default':
+        params['country'] = __j__['country']
     r = requests.get(
         'https://api.isthereanydeal.com/v01/deals/list/',
-        params={
-            'key': apiKey,
-            'sort': 'price:asc'
-        }
+        params=params
     ).content.decode()
     j = json.loads(r)
     games = []
     for item in j['data']['list']:
-        if item['price_new'] == 0 and not(item['shop']['name'].lower()) in __j__['storefilter'].lower():
-            game = Game(item['title'], item['shop']['name'], item['urls']['buy'], added=item['added'])
-            games.append(game)
+        game = Game(item['title'], item['shop']['name'], item['urls']['buy'], price=float(item['price_new']),
+                    currecny=j['.meta']['currency'], added=item['added'])
+        if game.price <= __j__['min_price']:
+            if __j__['show_only'] and __j__['dont_show_only']:
+                raise BothFilterTypesError("You need to enable only one of the two store filter types."
+                                           " Please edit settings.json.")
+            elif __j__['show_only'] and game.shop_name.lower() in __j__['show_only_list'].lower():
+                   games.append(game)
+            elif __j__['dont_show_only'] and not(game.shop_name.lower() in __j__['dont_show_only_list'].lower()):
+                    games.append(game)
     return games
 
 
@@ -58,16 +78,16 @@ def read_json(games):
             print("{} Already posted.".format(game.title))
         else:
             print("Posting {}.".format(game.title))
-            webhook.set_content(content=game.announce_msg)
-            webhook.send()
+            web_hook.set_content(content=game.announce_msg)
+            web_hook.send()
 
 
 def first_time_send(games):
-    webhook.set_content(content="Already-posted list not found, posting current free games & creating list.")
-    webhook.send()
+    web_hook.set_content(content="Already-posted list not found, posting current free games & creating list.")
+    web_hook.send()
     for game in games:
-        webhook.set_content(content=game.announce_msg)
-        webhook.send()
+        web_hook.set_content(content=game.announce_msg)
+        web_hook.send()
     write_json(games)
 
 
