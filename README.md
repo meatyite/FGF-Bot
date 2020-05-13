@@ -16,3 +16,9 @@ You can also optionally use Task Scheduler in Windows to run this script only on
 Without editing anything, the deafult version excludes itch.io games, since they are many - and often bad games that overshadow more polished Steam games. Edit `settings.json` to get rid of this restriction.
 
 In `setting.json` you can set `tag@everyone` to true - in order to have a @ everyone pushed with the message. Otherwise, leave it to false and it will only post the game.
+
+You can set a minimum price to look for (look for games under 5€ currently etc.). Change at `settings.json`.
+
+Optionally, you can change how the script filters stores.
+
+You can change th currency as well, look at [here](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) for valid country codes.
