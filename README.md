@@ -21,4 +21,4 @@ You can set a minimum price to look for (look for games under 5€ currently etc
 
 Optionally, you can change how the script filters stores.
 
-You can change th currency as well, look at [here](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) for valid country codes.
+You can change the currency as well, look at [here](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) for valid country codes.
