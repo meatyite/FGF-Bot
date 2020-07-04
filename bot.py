@@ -2,10 +2,16 @@ import requests
 import json
 from discord_webhooks import DiscordWebhooks
 import os
+import time
+import string
+
+
+allPunctuation = string.punctuation
+ignorePunctuation = ","
+excludePunctuation = "".join(ch for ch in string.punctuation if ch not in ignorePunctuation)
 
 __j__ = json.loads(open("settings.json", 'r').read())
 
-api_key = __j__['api_key']
 web_hook = DiscordWebhooks(__j__['web_hook'])
 
 
@@ -31,31 +37,58 @@ class BothFilterTypesError(Exception):
     pass
 
 
-def get_games():
-    params = {
-        'key': api_key,
-    }
+def get_shops_string():
+    r = requests.get("https://api.isthereanydeal.com/v01/web/stores/all/").content.decode()
+    j = json.loads(r)
+    shops_list = []
+    for shop in j['data']:
+        shops_list.append(shop['id'])
+        shops_list_string = str(shops_list).translate(str.maketrans('', '', excludePunctuation)).replace(" ", "")
+        # convert list to string and remove all punctuation and white space except ","
+    return shops_list_string
+
+
+def process_params():
+    params = {}
+    for key in __j__['api_params']:
+        if __j__['api_params'][key] != "":
+            params[key] = __j__['api_params'][key]
     if __j__['min_price'] <= 4.99:
         params['sort'] = 'price:asc'
-    if __j__['country'] != 'default':
-        params['country'] = __j__['country']
+
+    if __j__['show_only'] and __j__['dont_show_only']:
+        raise BothFilterTypesError("You need to enable only one of the two store filter types."
+                                    " Please edit settings.json.")
+    elif __j__['show_only']:
+            shops_string = __j__['show_only_list'].lower()
+    elif __j__['dont_show_only']:
+        shops_string = get_shops_string()
+        shops_filter = __j__['dont_show_only_list'].lower().split( "," )
+        for shop in shops_filter:
+            shops_string = shops_string.replace( shop + ",", "" )
+    params['shops'] = shops_string
+
+    return params
+
+
+def get_games():
+
+    params = process_params()
+
     r = requests.get(
         'https://api.isthereanydeal.com/v01/deals/list/',
         params=params
     ).content.decode()
     j = json.loads(r)
+
     games = []
+
     for item in j['data']['list']:
         game = Game(item['title'], item['shop']['name'], item['urls']['buy'], price=float(item['price_new']),
                     currecny=j['.meta']['currency'], added=item['added'])
         if game.price <= __j__['min_price']:
-            if __j__['show_only'] and __j__['dont_show_only']:
-                raise BothFilterTypesError("You need to enable only one of the two store filter types."
-                                           " Please edit settings.json.")
-            elif __j__['show_only'] and game.shop_name.lower() in __j__['show_only_list'].lower():
-                   games.append(game)
-            elif __j__['dont_show_only'] and not(game.shop_name.lower() in __j__['dont_show_only_list'].lower()):
-                    games.append(game)
+            games.append(game)
+
     return games
 
 
@@ -80,6 +113,7 @@ def read_json(games):
             print("Posting {}.".format(game.title))
             web_hook.set_content(content=game.announce_msg)
             web_hook.send()
+            time.sleep( 2.0 ) # wait two seconds between posts so discord doesn't think it's being spammed
 
 
 def first_time_send(games):
